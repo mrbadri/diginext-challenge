@@ -18,9 +18,7 @@ function parseUrl(url) {
   while (i < arrKeyValue.length) {
     const key = arrKeyValue[i];
     const value = arrKeyValue[i + 1];
-    temp[key] = value;
-
-    console.log(key, value);
+    temp[key] = decodeURIComponent(value);
 
     i += 2;
   }
@@ -57,7 +55,7 @@ function useFilter(formData) {
       if (!value) {
         onClear(name);
       } else {
-        state[name] = value;
+        state[name] = decodeURIComponent(value);
       }
     },
     [FormType.DROPDOWN]: (e, name, state) => {
@@ -71,7 +69,7 @@ function useFilter(formData) {
       if (!value) {
         onClear(name);
       } else {
-        state[name] = value;
+        state[name] = decodeURIComponent(value);
       }
     },
     [FormType.CHECKBOX]: (e, name, state) => {
