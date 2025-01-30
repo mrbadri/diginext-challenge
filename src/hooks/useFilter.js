@@ -39,63 +39,6 @@ function stringifyUrl(data) {
     .join(AND_SIGN);
 }
 
-const onChangeMap = {
-  [FormType.TEXT]: (e, name, state) => {
-    const value = e.target.value;
-
-    if (!value) {
-      delete state[name];
-    } else {
-      state[name] = value;
-    }
-  },
-  [FormType.DROPDOWN]: (e, name, state) => {
-    const value = e.target.value;
-    state[name] = value;
-  },
-  [FormType.TEXTAREA]: (e, name, state) => {
-    const value = e.target.value;
-
-    if (!value) {
-      delete state[name];
-    } else {
-      state[name] = value;
-    }
-  },
-  [FormType.CHECKBOX]: (e, name, state) => {
-    const value = e.target.value;
-
-    if (state[name]) {
-      delete state[name];
-    } else {
-      state[name] = value;
-    }
-  },
-  [FormType.CHECKBOX_GROUP]: (e, name, state) => {
-    const value = e.target.value;
-
-    if (state[name]) {
-      const oldValue = state[name];
-      const arr = oldValue.split(ARRAY_SEPARATOR);
-
-      if (arr.includes(value)) {
-        state[name] = arr.filter((v) => v !== value).join(ARRAY_SEPARATOR);
-
-        if (arr.length === 1) delete state[name];
-      } else {
-        state[name] += ARRAY_SEPARATOR + value;
-      }
-    } else state[name] = value;
-  },
-  // TODO: We Need debounce on chnage range
-  // TODO: when category is changed, price range should be cleared
-  [FormType.RANGE]: (e, name, state) => {
-    const value = e.target.value;
-
-    state[name] = value;
-  },
-};
-
 function useFilter(formData) {
   console.log(formData);
 
@@ -106,6 +49,63 @@ function useFilter(formData) {
   const search = location.search.substring(1);
 
   const filterState = parseUrl(search);
+
+  const onChangeMap = {
+    [FormType.TEXT]: (e, name, state) => {
+      const value = e.target.value;
+
+      if (!value) {
+        onClear(name);
+      } else {
+        state[name] = value;
+      }
+    },
+    [FormType.DROPDOWN]: (e, name, state) => {
+      const value = e.target.value;
+      state[name] = value;
+      clearChildrenField(name);
+    },
+    [FormType.TEXTAREA]: (e, name, state) => {
+      const value = e.target.value;
+
+      if (!value) {
+        onClear(name);
+      } else {
+        state[name] = value;
+      }
+    },
+    [FormType.CHECKBOX]: (e, name, state) => {
+      const value = e.target.value;
+
+      if (state[name]) {
+        onClear(name);
+      } else {
+        state[name] = value;
+      }
+    },
+    [FormType.CHECKBOX_GROUP]: (e, name, state) => {
+      const value = e.target.value;
+
+      if (state[name]) {
+        const oldValue = state[name];
+        const arr = oldValue.split(ARRAY_SEPARATOR);
+
+        if (arr.includes(value)) {
+          state[name] = arr.filter((v) => v !== value).join(ARRAY_SEPARATOR);
+
+          if (arr.length === 1) onClear(name);
+        } else {
+          state[name] += ARRAY_SEPARATOR + value;
+        }
+      } else state[name] = value;
+    },
+    // TODO: We Need debounce on chnage range
+    [FormType.RANGE]: (e, name, state) => {
+      const value = e.target.value;
+
+      state[name] = value;
+    },
+  };
 
   const setFilterState = useCallback(
     (state) => {
@@ -125,9 +125,25 @@ function useFilter(formData) {
     [filterState, setFilterState]
   );
 
+  const clearChildrenField = (name) => {
+    const fieldData = formData.find((f) => f.name === name);
+
+    if (fieldData.children && fieldData.children.length > 0) {
+      fieldData.children.forEach((child) => {
+        delete filterState[child];
+      });
+    }
+  };
+
+  const clearField = (name) => {
+    delete filterState[name];
+  };
+
   const onClear = useCallback(
     (name) => {
-      delete filterState[name];
+      clearChildrenField(name);
+      clearField(name);
+
       setFilterState(filterState);
     },
     [filterState, setFilterState]
